@@ -1,9 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const modeloTarefa = require('../models/tarefa');
+const jwt = require('jsonwebtoken');
+
+// Autenticação: login que gera token
+router.post('/login', (req, res) => {
+    if (req.body.nome === 'branqs' && req.body.senha === '1234') {
+        const token = jwt.sign({ id: req.body.nome }, 'segredo', { expiresIn: 300 }); // 5min
+        return res.json({ auth: true, token: token });
+    }
+    res.status(401).json({ auth: false, message: 'Login inválido!' });
+});
+
+// Middleware de autorização
+function verificaJWT(req, res, next) {
+    const token = req.headers['id-token'];
+    if (!token) return res.status(401).json({ auth: false, message: 'Token não fornecido' });
+
+    jwt.verify(token, 'segredo', (err, decoded) => {
+        if (err) return res.status(500).json({ auth: false, message: 'Token inválido!' });
+        next();
+    });
+}
 
 // Criar nova tarefa
-router.post('/post', async (req, res) => {
+router.post('/post', verificaJWT, async (req, res) => {
     const objetoTarefa = new modeloTarefa({
         descricao: req.body.descricao,
         statusRealizada: req.body.statusRealizada
@@ -18,7 +39,7 @@ router.post('/post', async (req, res) => {
 });
 
 // Listar todas as tarefas
-router.get('/getAll', async (req, res) => {
+router.get('/getAll', verificaJWT, async (req, res) => {
     try {
         const resultados = await modeloTarefa.find();
         res.json(resultados);
@@ -28,7 +49,7 @@ router.get('/getAll', async (req, res) => {
 });
 
 // Deletar uma tarefa por ID
-router.delete('/delete/:id', async (req, res) => {
+router.delete('/delete/:id', verificaJWT, async (req, res) => {
     try {
         const resultado = await modeloTarefa.findByIdAndDelete(req.params.id);
         if (!resultado) {
@@ -41,7 +62,7 @@ router.delete('/delete/:id', async (req, res) => {
 });
 
 // Atualizar uma tarefa por ID
-router.patch('/update/:id', async (req, res) => {
+router.patch('/update/:id', verificaJWT, async (req, res) => {
     try {
         const id = req.params.id;
         const novaTarefa = req.body;

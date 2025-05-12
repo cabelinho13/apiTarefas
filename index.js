@@ -10,7 +10,7 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Methods', 'HEAD, GET, POST, PATCH, DELETE'); // Define os métodos HTTP permitidos.
     res.header(
         "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept" // Define os cabeçalhos permitidos.
+        "Origin, X-Requested-With, Content-Type, Accept, id-token" // Define os cabeçalhos permitidos.
     );
     next(); // Passa o controle para o próximo middleware.
 });
